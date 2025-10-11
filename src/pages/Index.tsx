@@ -12,6 +12,7 @@ interface Message {
   text: string;
   language: 'english' | 'surigaonon';
   isUser: boolean;
+  role?: 'user' | 'assistant';
 }
 
 type TranslationMode = 'conversation' | 'translation';
@@ -25,6 +26,74 @@ const Index = () => {
   const { toast } = useToast();
 
   const targetLanguage = sourceLanguage === 'english' ? 'surigaonon' : 'english';
+
+  const converse = async (text: string) => {
+    if (!text.trim()) return;
+
+    setIsTranslating(true);
+
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: text,
+      language: sourceLanguage,
+      isUser: true,
+      role: 'user',
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    try {
+      // Build conversation history for context
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role || (msg.isUser ? 'user' : 'assistant'),
+        content: msg.text
+      }));
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/conversation`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: text,
+            language: sourceLanguage,
+            conversationHistory: conversationHistory,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.reply) {
+        // Add AI response
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: data.reply,
+          language: sourceLanguage,
+          isUser: false,
+          role: 'assistant',
+        };
+        setMessages(prev => [...prev, aiMessage]);
+      } else {
+        toast({
+          title: 'Error',
+          description: data.error || 'Conversation failed',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to get response',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTranslating(false);
+      setInputText('');
+    }
+  };
 
   const translate = async (text: string) => {
     if (!text.trim()) return;
@@ -67,11 +136,6 @@ const Index = () => {
           isUser: false,
         };
         setMessages(prev => [...prev, translatedMessage]);
-        
-        // In conversation mode, auto-flip the language for the next input
-        if (mode === 'conversation') {
-          setSourceLanguage(targetLanguage);
-        }
       } else {
         toast({
           title: 'Error',
@@ -91,13 +155,21 @@ const Index = () => {
     }
   };
 
-  const handleVoiceTranscript = (text: string) => {
-    translate(text);
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    translate(inputText);
+    if (mode === 'conversation') {
+      converse(inputText);
+    } else {
+      translate(inputText);
+    }
+  };
+
+  const handleVoiceTranscript = (text: string) => {
+    if (mode === 'conversation') {
+      converse(text);
+    } else {
+      translate(text);
+    }
   };
 
   const toggleLanguage = () => {
@@ -141,15 +213,22 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Language Toggle/Indicator */}
+      {/* Language Indicator */}
       <div className="bg-card border-b">
         <div className="max-w-2xl mx-auto">
           {mode === 'translation' ? (
             <LanguageToggle sourceLanguage={sourceLanguage} onToggle={toggleLanguage} />
           ) : (
-            <div className="text-center py-3 text-sm font-medium text-muted-foreground">
-              Type in: <span className="text-primary font-semibold">{sourceLanguage === 'english' ? 'English' : 'Surigaonon'}</span>
-              {' '} → Translates to: <span className="text-accent font-semibold">{targetLanguage === 'english' ? 'English' : 'Surigaonon'}</span>
+            <div className="text-center py-3">
+              <div className="text-sm font-medium text-muted-foreground">
+                Conversing in: <span className="text-primary font-semibold">{sourceLanguage === 'english' ? 'English' : 'Surigaonon'}</span>
+              </div>
+              <button 
+                onClick={toggleLanguage}
+                className="text-xs text-accent hover:underline mt-1"
+              >
+                Switch to {sourceLanguage === 'english' ? 'Surigaonon' : 'English'}
+              </button>
             </div>
           )}
         </div>
@@ -165,7 +244,7 @@ const Index = () => {
                   <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-20" />
                   <h2 className="text-xl font-semibold mb-2">Start a Conversation</h2>
                   <p className="text-sm">
-                    Languages will automatically alternate after each translation
+                    Chat naturally with AI in your chosen language
                   </p>
                 </>
               ) : (
@@ -206,7 +285,10 @@ const Index = () => {
           {/* Text Input */}
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Input
-              placeholder={`Type in ${sourceLanguage === 'english' ? 'English' : 'Surigaonon'}...`}
+              placeholder={mode === 'conversation' 
+                ? `Chat in ${sourceLanguage === 'english' ? 'English' : 'Surigaonon'}...`
+                : `Type in ${sourceLanguage === 'english' ? 'English' : 'Surigaonon'}...`
+              }
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               disabled={isTranslating}
