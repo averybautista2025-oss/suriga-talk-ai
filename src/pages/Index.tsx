@@ -179,7 +179,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-background flex flex-col">
       {/* Header */}
-      <header className="bg-gradient-primary text-white p-4 shadow-glow">
+      <header className="bg-gradient-primary text-white p-4 shadow-glow sticky top-0 z-10">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-3">
             <Languages className="h-8 w-8" />
@@ -214,7 +214,7 @@ const Index = () => {
       </header>
 
       {/* Language Indicator */}
-      <div className="bg-card border-b">
+      <div className="bg-card border-b sticky top-[88px] z-10">
         <div className="max-w-2xl mx-auto">
           {mode === 'translation' ? (
             <LanguageToggle sourceLanguage={sourceLanguage} onToggle={toggleLanguage} />
