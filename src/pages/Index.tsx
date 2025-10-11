@@ -177,9 +177,9 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-background flex flex-col overflow-x-hidden w-full max-w-full">
+    <div className="fixed inset-0 bg-gradient-background flex flex-col overflow-x-hidden w-full">
       {/* Header */}
-      <header className="bg-gradient-primary text-white p-4 shadow-glow sticky top-0 z-10">
+      <header className="bg-gradient-primary text-white p-4 shadow-glow flex-shrink-0">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-3">
             <Languages className="h-8 w-8" />
@@ -214,7 +214,7 @@ const Index = () => {
       </header>
 
       {/* Language Indicator */}
-      <div className="bg-card border-b sticky top-[88px] z-10">
+      <div className="bg-card border-b flex-shrink-0">
         <div className="max-w-2xl mx-auto">
           {mode === 'translation' ? (
             <LanguageToggle sourceLanguage={sourceLanguage} onToggle={toggleLanguage} />
@@ -235,7 +235,7 @@ const Index = () => {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-32">
         <div className="max-w-2xl mx-auto space-y-2">
           {messages.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
@@ -271,7 +271,7 @@ const Index = () => {
       </div>
 
       {/* Input Area */}
-      <div className="bg-card border-t p-4 sticky bottom-0">
+      <div className="bg-card border-t p-4 fixed bottom-0 left-0 right-0 flex-shrink-0">
         <div className="max-w-2xl mx-auto">
           {/* Voice Recorder */}
           <div className="flex justify-center mb-4">
