@@ -1,6 +1,6 @@
 import { Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface MessageBubbleProps {
   text: string;
@@ -10,38 +10,44 @@ interface MessageBubbleProps {
 
 export const MessageBubble = ({ text, language, isUser }: MessageBubbleProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
 
-  const playAudio = async () => {
-    if (isPlaying) return;
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      setSpeechSynthesis(window.speechSynthesis);
+    }
+  }, []);
+
+  const playAudio = () => {
+    if (isPlaying || !speechSynthesis) return;
     
     setIsPlaying(true);
     
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/text-to-speech`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: text,
-            language: language,
-          }),
-        }
-      );
-
-      const data = await response.json();
+      // Cancel any ongoing speech
+      speechSynthesis.cancel();
       
-      if (data.audioBase64) {
-        const audio = new Audio(`data:audio/mp3;base64,${data.audioBase64}`);
-        audio.onended = () => setIsPlaying(false);
-        audio.play();
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Set language and voice
+      utterance.lang = language === 'english' ? 'en-US' : 'en-PH';
+      utterance.rate = 0.9; // Slightly slower for clarity
+      utterance.pitch = 1.0;
+      
+      // Get available voices and select appropriate one
+      const voices = speechSynthesis.getVoices();
+      const voice = voices.find(v => v.lang.startsWith(language === 'english' ? 'en' : 'en'));
+      if (voice) {
+        utterance.voice = voice;
       }
+
+      utterance.onend = () => setIsPlaying(false);
+      utterance.onerror = () => setIsPlaying(false);
+      
+      speechSynthesis.speak(utterance);
     } catch (error) {
       console.error('Error playing audio:', error);
-    } finally {
-      setTimeout(() => setIsPlaying(false), 100);
+      setIsPlaying(false);
     }
   };
 
@@ -63,7 +69,7 @@ export const MessageBubble = ({ text, language, isUser }: MessageBubbleProps) =>
             size="sm"
             className="h-8 w-8 p-0 hover:bg-white/20"
             onClick={playAudio}
-            disabled={isPlaying}
+            disabled={isPlaying || !speechSynthesis}
           >
             <Volume2 className={`h-4 w-4 ${isPlaying ? 'animate-pulse' : ''}`} />
           </Button>
