@@ -273,17 +273,15 @@ const Index = () => {
       {/* Input Area */}
       <div className="bg-card border-t p-4 fixed bottom-0 left-0 right-0 flex-shrink-0">
         <div className="max-w-2xl mx-auto">
-          {/* Voice Recorder */}
-          <div className="flex justify-center mb-4">
-            <VoiceRecorder
-              onTranscript={handleVoiceTranscript}
-              language={sourceLanguage}
-              isDisabled={isTranslating}
-            />
-          </div>
-
-          {/* Text Input */}
-          <form onSubmit={handleSubmit} className="flex gap-2">
+          {/* Text Input with Voice Recorder and Send Button */}
+          <form onSubmit={handleSubmit} className="flex gap-2 items-center">
+            <div className="flex-shrink-0">
+              <VoiceRecorder
+                onTranscript={handleVoiceTranscript}
+                language={sourceLanguage}
+                isDisabled={isTranslating}
+              />
+            </div>
             <Input
               placeholder={mode === 'conversation' 
                 ? `Chat in ${sourceLanguage === 'english' ? 'English' : 'Surigaonon'}...`
@@ -298,7 +296,7 @@ const Index = () => {
               type="submit"
               size="icon"
               disabled={!inputText.trim() || isTranslating}
-              className="bg-primary hover:bg-primary-dark"
+              className="bg-primary hover:bg-primary-dark flex-shrink-0"
             >
               <Send className="h-4 w-4" />
             </Button>
