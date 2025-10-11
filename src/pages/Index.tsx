@@ -4,7 +4,7 @@ import { VoiceRecorder } from '@/components/VoiceRecorder';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, Languages } from 'lucide-react';
+import { Send, Languages, MessageSquare, ArrowLeftRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Message {
@@ -14,11 +14,14 @@ interface Message {
   isUser: boolean;
 }
 
+type TranslationMode = 'conversation' | 'translation';
+
 const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [sourceLanguage, setSourceLanguage] = useState<'english' | 'surigaonon'>('english');
   const [isTranslating, setIsTranslating] = useState(false);
+  const [mode, setMode] = useState<TranslationMode>('translation');
   const { toast } = useToast();
 
   const targetLanguage = sourceLanguage === 'english' ? 'surigaonon' : 'english';
@@ -64,6 +67,11 @@ const Index = () => {
           isUser: false,
         };
         setMessages(prev => [...prev, translatedMessage]);
+        
+        // In conversation mode, auto-flip the language for the next input
+        if (mode === 'conversation') {
+          setSourceLanguage(targetLanguage);
+        }
       } else {
         toast({
           title: 'Error',
@@ -100,32 +108,70 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-background flex flex-col">
       {/* Header */}
       <header className="bg-gradient-primary text-white p-4 shadow-glow">
-        <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Languages className="h-8 w-8" />
-          <div>
-            <h1 className="text-2xl font-bold">Surigaonon Translator</h1>
-            <p className="text-sm opacity-90">AI-powered conversational translation</p>
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-3 mb-3">
+            <Languages className="h-8 w-8" />
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold">Surigaonon Translator</h1>
+              <p className="text-sm opacity-90">AI-powered conversational translation</p>
+            </div>
+          </div>
+          
+          {/* Mode Toggle */}
+          <div className="flex gap-2">
+            <Button
+              variant={mode === 'translation' ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setMode('translation')}
+              className="flex-1"
+            >
+              <ArrowLeftRight className="h-4 w-4 mr-2" />
+              Translation Mode
+            </Button>
+            <Button
+              variant={mode === 'conversation' ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setMode('conversation')}
+              className="flex-1"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Conversation Mode
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Language Toggle */}
-      <div className="bg-card border-b">
-        <div className="max-w-2xl mx-auto">
-          <LanguageToggle sourceLanguage={sourceLanguage} onToggle={toggleLanguage} />
+      {/* Language Toggle - Only show in Translation Mode */}
+      {mode === 'translation' && (
+        <div className="bg-card border-b">
+          <div className="max-w-2xl mx-auto">
+            <LanguageToggle sourceLanguage={sourceLanguage} onToggle={toggleLanguage} />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-2xl mx-auto space-y-2">
           {messages.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <Languages className="h-16 w-16 mx-auto mb-4 opacity-20" />
-              <h2 className="text-xl font-semibold mb-2">Start a Conversation</h2>
-              <p className="text-sm">
-                Tap and hold the microphone to speak, or type your message below
-              </p>
+              {mode === 'conversation' ? (
+                <>
+                  <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                  <h2 className="text-xl font-semibold mb-2">Start a Conversation</h2>
+                  <p className="text-sm">
+                    Languages will automatically alternate after each translation
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Languages className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                  <h2 className="text-xl font-semibold mb-2">Start Translating</h2>
+                  <p className="text-sm">
+                    Tap and hold the microphone to speak, or type your message below
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             messages.map(message => (
