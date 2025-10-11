@@ -177,7 +177,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-background flex flex-col">
+    <div className="min-h-screen bg-gradient-background flex flex-col overflow-x-hidden w-full max-w-full">
       {/* Header */}
       <header className="bg-gradient-primary text-white p-4 shadow-glow sticky top-0 z-10">
         <div className="max-w-2xl mx-auto">
