@@ -120,19 +120,19 @@ const Index = () => {
           {/* Mode Toggle */}
           <div className="flex gap-2">
             <Button
-              variant={mode === 'translation' ? 'secondary' : 'outline'}
+              variant={mode === 'translation' ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setMode('translation')}
-              className="flex-1"
+              className={`flex-1 ${mode === 'translation' ? '' : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'}`}
             >
               <ArrowLeftRight className="h-4 w-4 mr-2" />
               Translation Mode
             </Button>
             <Button
-              variant={mode === 'conversation' ? 'secondary' : 'outline'}
+              variant={mode === 'conversation' ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setMode('conversation')}
-              className="flex-1"
+              className={`flex-1 ${mode === 'conversation' ? '' : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'}`}
             >
               <MessageSquare className="h-4 w-4 mr-2" />
               Conversation Mode
@@ -141,14 +141,19 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Language Toggle - Only show in Translation Mode */}
-      {mode === 'translation' && (
-        <div className="bg-card border-b">
-          <div className="max-w-2xl mx-auto">
+      {/* Language Toggle/Indicator */}
+      <div className="bg-card border-b">
+        <div className="max-w-2xl mx-auto">
+          {mode === 'translation' ? (
             <LanguageToggle sourceLanguage={sourceLanguage} onToggle={toggleLanguage} />
-          </div>
+          ) : (
+            <div className="text-center py-3 text-sm font-medium text-muted-foreground">
+              Type in: <span className="text-primary font-semibold">{sourceLanguage === 'english' ? 'English' : 'Surigaonon'}</span>
+              {' '} → Translates to: <span className="text-accent font-semibold">{targetLanguage === 'english' ? 'English' : 'Surigaonon'}</span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4">
