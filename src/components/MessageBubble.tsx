@@ -78,7 +78,7 @@ export const MessageBubble = ({ text, language, isUser }: MessageBubbleProps) =>
             size="sm"
             className="h-8 w-8 p-0 hover:bg-white/20"
             onClick={playAudio}
-            disabled={isPlaying || !speechSynthesis}
+            disabled={isPlaying}
           >
             <Volume2 className={`h-4 w-4 ${isPlaying ? 'animate-pulse' : ''}`} />
           </Button>
