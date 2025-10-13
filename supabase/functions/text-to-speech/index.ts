@@ -35,8 +35,9 @@ serve(async (req) => {
     // English: Brian (nPczCjzI2devNBz1zQrb)
     // Surigaonon: Custom voice (K6AzvUWLhMiziMuhhX31)
     const voiceId = language === 'english' ? 'nPczCjzI2devNBz1zQrb' : 'K6AzvUWLhMiziMuhhX31';
+    console.log('Using voiceId:', voiceId);
 
-    // Generate speech using ElevenLabs SDK
+
     const audio = await elevenlabs.textToSpeech.convert(voiceId, {
       text: text,
       model_id: 'eleven_multilingual_v2',
