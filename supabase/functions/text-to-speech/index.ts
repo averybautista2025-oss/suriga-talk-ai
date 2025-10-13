@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { ElevenLabsClient } from "https://esm.sh/elevenlabs@0.8.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,34 +26,38 @@ serve(async (req) => {
       throw new Error('ELEVENLABS_API_KEY not configured');
     }
 
+    // Initialize ElevenLabs client
+    const elevenlabs = new ElevenLabsClient({
+      apiKey: ELEVENLABS_API_KEY,
+    });
+
     // Use different voices for different languages
     // English: Brian (nPczCjzI2devNBz1zQrb)
     // Surigaonon: Custom voice (K6AzvUWLhMiziMuhhX31)
     const voiceId = language === 'english' ? 'nPczCjzI2devNBz1zQrb' : 'K6AzvUWLhMiziMuhhX31';
 
-    // Generate speech using ElevenLabs TTS
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: 'POST',
-      headers: {
-        'xi-api-key': ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: text,
-        model_id: 'eleven_multilingual_v2',
-      }),
+    // Generate speech using ElevenLabs SDK
+    const audio = await elevenlabs.textToSpeech.convert(voiceId, {
+      text: text,
+      model_id: 'eleven_multilingual_v2',
+      output_format: 'mp3_44100_128',
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('TTS API error:', error);
-      throw new Error(`Text-to-speech failed: ${response.status}`);
+    // Convert audio stream to array buffer
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of audio) {
+      chunks.push(chunk);
+    }
+    const arrayBuffer = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
+    let offset = 0;
+    for (const chunk of chunks) {
+      arrayBuffer.set(chunk, offset);
+      offset += chunk.length;
     }
 
-    // Convert audio to base64
-    const arrayBuffer = await response.arrayBuffer();
+    // Convert to base64
     const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(arrayBuffer))
+      String.fromCharCode(...arrayBuffer)
     );
 
     console.log('Generated audio, length:', base64Audio.length);
