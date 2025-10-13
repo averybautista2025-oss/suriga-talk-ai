@@ -98,15 +98,15 @@ export const VoiceRecorder = ({ onTranscript, language, isDisabled }: VoiceRecor
 
   return (
     <Button
-      size="lg"
+      size="icon"
       variant={isRecording ? 'destructive' : 'default'}
-      className={`rounded-full w-16 h-16 shadow-glow transition-all ${
+      className={`transition-all ${
         isRecording ? 'animate-pulse-ring' : ''
       }`}
       onClick={isRecording ? stopRecording : startRecording}
       disabled={isDisabled}
     >
-      {isRecording ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+      {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
     </Button>
   );
 };
