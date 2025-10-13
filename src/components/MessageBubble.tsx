@@ -1,6 +1,8 @@
 import { Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface MessageBubbleProps {
   text: string;
@@ -10,43 +12,50 @@ interface MessageBubbleProps {
 
 export const MessageBubble = ({ text, language, isUser }: MessageBubbleProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      setSpeechSynthesis(window.speechSynthesis);
-    }
-  }, []);
-
-  const playAudio = () => {
-    if (isPlaying || !speechSynthesis) return;
+  const playAudio = async () => {
+    if (isPlaying) return;
     
     setIsPlaying(true);
     
     try {
-      // Cancel any ongoing speech
-      speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      // Set language and voice
-      utterance.lang = language === 'english' ? 'en-US' : 'en-PH';
-      utterance.rate = 0.9; // Slightly slower for clarity
-      utterance.pitch = 1.0;
-      
-      // Get available voices and select appropriate one
-      const voices = speechSynthesis.getVoices();
-      const voice = voices.find(v => v.lang.startsWith(language === 'english' ? 'en' : 'en'));
-      if (voice) {
-        utterance.voice = voice;
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: { text, language }
+      });
+
+      if (error) throw error;
+
+      if (!data?.audioBase64) {
+        throw new Error('No audio data received');
       }
 
-      utterance.onend = () => setIsPlaying(false);
-      utterance.onerror = () => setIsPlaying(false);
+      // Convert base64 to blob and play
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0))],
+        { type: 'audio/mpeg' }
+      );
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
       
-      speechSynthesis.speak(utterance);
+      audio.onended = () => {
+        setIsPlaying(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      audio.onerror = () => {
+        setIsPlaying(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      await audio.play();
     } catch (error) {
       console.error('Error playing audio:', error);
+      toast({
+        title: 'Audio Error',
+        description: 'Failed to play audio. Please try again.',
+        variant: 'destructive',
+      });
       setIsPlaying(false);
     }
   };

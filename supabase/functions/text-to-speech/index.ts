@@ -20,26 +20,26 @@ serve(async (req) => {
 
     console.log('Text-to-speech request:', { text, language });
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
+    if (!ELEVENLABS_API_KEY) {
+      throw new Error('ELEVENLABS_API_KEY not configured');
     }
 
     // Use different voices for different languages
-    const voice = language === 'english' ? 'alloy' : 'nova';
+    // English: Brian (nPczCjzI2devNBz1zQrb)
+    // Surigaonon: Custom voice (K6AzvUWLhMiziMuhhX31)
+    const voiceId = language === 'english' ? 'nPczCjzI2devNBz1zQrb' : 'K6AzvUWLhMiziMuhhX31';
 
-    // Generate speech using OpenAI TTS
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+    // Generate speech using ElevenLabs TTS
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'xi-api-key': ELEVENLABS_API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'tts-1',
-        input: text,
-        voice: voice,
-        response_format: 'mp3',
+        text: text,
+        model_id: 'eleven_multilingual_v2',
       }),
     });
 
