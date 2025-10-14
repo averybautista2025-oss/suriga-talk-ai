@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { ElevenLabsClient } from "https://esm.sh/elevenlabs@0.8.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,44 +20,43 @@ serve(async (req) => {
 
     console.log('Text-to-speech request:', { text, language });
 
-    const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
-    if (!ELEVENLABS_API_KEY) {
-      throw new Error('ELEVENLABS_API_KEY not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY not configured');
     }
 
-    // Initialize ElevenLabs client
-    const elevenlabs = new ElevenLabsClient({
-      apiKey: ELEVENLABS_API_KEY,
+    // Use natural OpenAI voices
+    // English: Echo (warm, natural male voice)
+    // Surigaonon: Alloy (neutral, balanced voice for non-English)
+    const voice = language === 'english' ? 'echo' : 'alloy';
+    console.log('Using OpenAI voice:', voice, 'for language:', language);
+
+    // Generate speech using OpenAI TTS API
+    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'tts-1-hd', // High-definition model for better quality
+        input: text,
+        voice: voice,
+        response_format: 'mp3',
+        speed: 1.0,
+      }),
     });
 
-    // Use different voices for different languages
-    // English: Brian (nPczCjzI2devNBz1zQrb)
-    // Surigaonon: Custom voice (K6AzvUWLhMiziMuhhX31)
-    const voiceId = language === 'english' ? 'nPczCjzI2devNBz1zQrb' : 'K6AzvUWLhMiziMuhhX31';
-    console.log('Using voiceId:', voiceId);
-
-
-    const audio = await elevenlabs.textToSpeech.convert(voiceId, {
-      text: text,
-      model_id: 'eleven_multilingual_v2',
-      output_format: 'mp3_44100_128',
-    });
-
-    // Convert audio stream to array buffer
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of audio) {
-      chunks.push(chunk);
-    }
-    const arrayBuffer = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
-    let offset = 0;
-    for (const chunk of chunks) {
-      arrayBuffer.set(chunk, offset);
-      offset += chunk.length;
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('OpenAI TTS error:', response.status, error);
+      throw new Error(`OpenAI TTS failed: ${response.status}`);
     }
 
-    // Convert to base64
+    // Convert audio to base64
+    const arrayBuffer = await response.arrayBuffer();
     const base64Audio = btoa(
-      String.fromCharCode(...arrayBuffer)
+      String.fromCharCode(...new Uint8Array(arrayBuffer))
     );
 
     console.log('Generated audio, length:', base64Audio.length);

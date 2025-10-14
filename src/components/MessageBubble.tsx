@@ -1,7 +1,7 @@
 import { Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-// Removed supabase client - using browser SpeechSynthesis API instead
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface MessageBubbleProps {
@@ -16,101 +16,39 @@ export const MessageBubble = ({ text, language, isUser }: MessageBubbleProps) =>
 
   const playAudio = async () => {
     if (isPlaying) return;
-
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      toast({
-        title: 'Audio Unsupported',
-        description: 'Your browser does not support text-to-speech.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    
     setIsPlaying(true);
-
+    
     try {
-      const synth = window.speechSynthesis;
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: { text, language }
+      });
 
-      const getVoices = () =>
-        new Promise<SpeechSynthesisVoice[]>((resolve) => {
-          let voices = synth.getVoices();
-          if (voices.length) return resolve(voices);
-          const id = setInterval(() => {
-            voices = synth.getVoices();
-            if (voices.length) {
-              clearInterval(id);
-              resolve(voices);
-            }
-          }, 100);
-          setTimeout(() => {
-            clearInterval(id);
-            resolve(synth.getVoices());
-          }, 3000);
-        });
+      if (error) throw error;
 
-      const voices = await getVoices();
-      if (!voices.length) {
-        throw new Error('No voices available');
+      if (!data?.audioBase64) {
+        throw new Error('No audio data received');
       }
 
-      const lower = (s?: string) => (s ? s.toLowerCase() : '');
-
-      const pickVoice = (all: SpeechSynthesisVoice[]) => {
-        if (language === 'english') {
-          const en = all.filter((v) => lower(v.lang).startsWith('en'));
-          const maleNames = [
-            'male',
-            'david',
-            'mark',
-            'daniel',
-            'john',
-            'brian',
-            'george',
-            'mike',
-            'microsoft david',
-            'google uk english male',
-          ];
-          const match = en.find((v) => maleNames.some((n) => lower(v.name).includes(n)));
-          return match || en[0] || all[0];
-        } else {
-          // Surigaonon: try Cebuano, then Filipino/Tagalog, then any PH voice
-          const ceb = all.find((v) => lower(v.name).includes('cebu') || lower(v.lang).includes('ceb'));
-          if (ceb) return ceb;
-          const fil = all.find((v) => lower(v.lang).includes('fil') || lower(v.name).includes('tagalog'));
-          if (fil) return fil;
-          const ph = all.find((v) => lower(v.lang).endsWith('-ph'));
-          if (ph) return ph;
-          return all[0];
-        }
-      };
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      const voice = pickVoice(voices);
-      if (voice) {
-        utterance.voice = voice;
-        if (language === 'surigaonon') {
-          utterance.lang = voice.lang || 'ceb-PH';
-        } else {
-          utterance.lang = voice.lang || 'en-US';
-        }
-      }
-      utterance.rate = 1;
-      utterance.pitch = 1;
-
-      utterance.onend = () => {
+      // Convert base64 to blob and play
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0))],
+        { type: 'audio/mpeg' }
+      );
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      
+      audio.onended = () => {
         setIsPlaying(false);
+        URL.revokeObjectURL(audioUrl);
       };
-      utterance.onerror = () => {
+      
+      audio.onerror = () => {
         setIsPlaying(false);
-        toast({
-          title: 'Audio Error',
-          description: 'Failed to play audio. Please try again.',
-          variant: 'destructive',
-        });
+        URL.revokeObjectURL(audioUrl);
       };
-
-      synth.cancel(); // ensure clean start
-      synth.speak(utterance);
+      
+      await audio.play();
     } catch (error) {
       console.error('Error playing audio:', error);
       toast({
