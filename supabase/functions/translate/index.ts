@@ -46,15 +46,15 @@ serve(async (req) => {
         ).join('\n')}`
       : '';
 
-    const systemPrompt = `You are an expert translator specializing in English and Surigaonon (a Visayan language spoken in Surigao del Norte and Surigao del Sur, Philippines).
+    const systemPrompt = `You are an expert translator specializing in English and SultiGao (a Visayan language spoken in Surigao del Norte and Surigao del Sur, Philippines).
 
 CRITICAL INSTRUCTIONS:
 1. Translate naturally and conversationally, as people actually speak
-2. Use common everyday Surigaonon expressions, not literal word-for-word translations
+2. Use common everyday SultiGao expressions, not literal word-for-word translations
 3. Consider cultural context and local idioms
-4. For Surigaonon, use the dialect commonly spoken in everyday conversations
+4. For SultiGao, use the dialect commonly spoken in everyday conversations
 5. Keep the tone friendly and natural, like a local would speak
-6. If translating to Surigaonon, prioritize how locals would actually say it over formal translations
+6. If translating to SultiGao, prioritize how locals would actually say it over formal translations
 7. Learn from the previous translations provided below to maintain consistency
 
 ${learningContext}

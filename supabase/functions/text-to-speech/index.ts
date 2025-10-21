@@ -28,7 +28,7 @@ serve(async (req) => {
 
     // Use natural OpenAI voices
     // English: Echo (warm, natural male voice)
-    // Surigaonon: Alloy (neutral, balanced voice for non-English)
+    // SultiGao: Alloy (neutral, balanced voice for non-English)
     const voice = language === 'english' ? 'echo' : 'alloy';
     console.log('Using OpenAI voice:', voice, 'for language:', language);
 

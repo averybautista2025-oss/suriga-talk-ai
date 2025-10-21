@@ -184,7 +184,7 @@ const Index = () => {
           <div className="flex items-center gap-3 mb-3">
             <Languages className="h-8 w-8" />
             <div className="flex-1">
-              <h1 className="text-2xl font-bold">Surigaonon Translator</h1>
+              <h1 className="text-2xl font-bold">SultiGao Translator</h1>
               <p className="text-sm opacity-90">AI-powered conversational translation</p>
             </div>
           </div>
@@ -221,13 +221,13 @@ const Index = () => {
           ) : (
             <div className="text-center py-3">
               <div className="text-sm font-medium text-muted-foreground">
-                Conversing in: <span className="text-primary font-semibold">{sourceLanguage === 'english' ? 'English' : 'Surigaonon'}</span>
+                Conversing in: <span className="text-primary font-semibold">{sourceLanguage === 'english' ? 'English' : 'SultiGao'}</span>
               </div>
               <button 
                 onClick={toggleLanguage}
                 className="text-xs text-accent hover:underline mt-1"
               >
-                Switch to {sourceLanguage === 'english' ? 'Surigaonon' : 'English'}
+                Switch to {sourceLanguage === 'english' ? 'SultiGao' : 'English'}
               </button>
             </div>
           )}
@@ -284,8 +284,8 @@ const Index = () => {
             </div>
             <Input
               placeholder={mode === 'conversation' 
-                ? `Chat in ${sourceLanguage === 'english' ? 'English' : 'Surigaonon'}...`
-                : `Type in ${sourceLanguage === 'english' ? 'English' : 'Surigaonon'}...`
+                ? `Chat in ${sourceLanguage === 'english' ? 'English' : 'SultiGao'}...`
+                : `Type in ${sourceLanguage === 'english' ? 'English' : 'SultiGao'}...`
               }
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
