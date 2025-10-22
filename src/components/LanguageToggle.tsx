@@ -10,7 +10,7 @@ export const LanguageToggle = ({ sourceLanguage, onToggle }: LanguageToggleProps
   return (
     <div className="flex items-center justify-center gap-3 py-4">
       <div className="text-sm font-medium">
-        {sourceLanguage === 'english' ? 'English' : 'SultiGao'}
+        {sourceLanguage === 'english' ? 'English' : 'Surigaonon'}
       </div>
       <Button
         variant="outline"
@@ -21,7 +21,7 @@ export const LanguageToggle = ({ sourceLanguage, onToggle }: LanguageToggleProps
         <ArrowLeftRight className="h-4 w-4" />
       </Button>
       <div className="text-sm font-medium">
-        {sourceLanguage === 'english' ? 'SultiGao' : 'English'}
+        {sourceLanguage === 'english' ? 'Surigaonon' : 'English'}
       </div>
     </div>
   );

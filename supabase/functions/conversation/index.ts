@@ -18,7 +18,7 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not found');
     }
 
-    const languageName = language === 'english' ? 'English' : 'SultiGao';
+    const languageName = language === 'english' ? 'English' : 'Surigaonon';
     
     const systemPrompt = `You are a friendly, conversational AI assistant. You are having a natural conversation with a user in ${languageName}. 
     

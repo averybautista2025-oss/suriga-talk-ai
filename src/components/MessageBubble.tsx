@@ -111,7 +111,7 @@ export const MessageBubble = ({ text, language, isUser }: MessageBubbleProps) =>
           </Button>
         </div>
         <p className="text-xs mt-1 opacity-70">
-          {language === 'english' ? 'English' : 'SultiGao'}
+          {language === 'english' ? 'English' : 'Surigaonon'}
         </p>
       </div>
     </div>
