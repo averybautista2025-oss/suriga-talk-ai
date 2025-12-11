@@ -1,11 +1,14 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import Bytez from "https://esm.sh/bytez.js@1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
+
+const BYTEZ_API_KEY = "c9a9dad77404315d98477b11079095cc";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -21,44 +24,44 @@ serve(async (req) => {
 
     console.log('Text-to-speech request:', { text, language });
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY not configured');
+    // Initialize Bytez SDK
+    const sdk = new Bytez(BYTEZ_API_KEY);
+    const model = sdk.model("openai/tts-1-hd");
+
+    // Generate speech using Bytez
+    const { error, output } = await model.run(text);
+
+    if (error) {
+      console.error('Bytez TTS error:', error);
+      throw new Error(`Bytez TTS failed: ${error}`);
     }
 
-    // Use natural OpenAI voices
-    // English: Echo (warm, natural male voice)
-    // Surigaonon: Alloy (neutral, balanced voice for non-English)
-    const voice = language === 'english' ? 'echo' : 'alloy';
-    console.log('Using OpenAI voice:', voice, 'for language:', language);
+    console.log('Generated audio via Bytez');
 
-    // Generate speech using OpenAI TTS API
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'tts-1-hd', // High-definition model for better quality
-        input: text,
-        voice: voice,
-        response_format: 'mp3',
-        speed: 1.0,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('OpenAI TTS error:', response.status, error);
-      throw new Error(`OpenAI TTS failed: ${response.status}`);
+    // Handle output - Bytez returns audio data
+    let base64Audio: string;
+    
+    if (output instanceof ArrayBuffer) {
+      base64Audio = btoa(String.fromCharCode(...new Uint8Array(output)));
+    } else if (output instanceof Uint8Array) {
+      base64Audio = btoa(String.fromCharCode(...output));
+    } else if (typeof output === 'string') {
+      // If already base64
+      base64Audio = output;
+    } else if (output?.data) {
+      // If wrapped in object
+      const data = output.data;
+      if (data instanceof ArrayBuffer) {
+        base64Audio = btoa(String.fromCharCode(...new Uint8Array(data)));
+      } else if (data instanceof Uint8Array) {
+        base64Audio = btoa(String.fromCharCode(...data));
+      } else {
+        base64Audio = String(data);
+      }
+    } else {
+      console.log('Bytez output type:', typeof output, output);
+      throw new Error('Unexpected output format from Bytez');
     }
-
-    // Convert audio to base64
-    const arrayBuffer = await response.arrayBuffer();
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(arrayBuffer))
-    );
 
     console.log('Generated audio, length:', base64Audio.length);
 
